@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+version: '3.8' # Specifies the version of the Docker Compose file format
+
+# This is the main section where we define all our services (containers)
+services:
+  # Define our .NET API service
+  api:
+    container_name: assetgaze-api # A friendly name for our API container
+    build:
+      context: . # The build context is the current directory (the project root)
+      dockerfile: src/Assetgaze.Transactions.API/Dockerfile # The path to the Dockerfile we created
+    ports:
+      # Maps port 8080 inside the container to port 5001 on your Mac.
+      # Format is "HOST:CONTAINER"
+      - "5001:8080"
+    environment:
+      # Environment variables passed to our API service
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      # This is the connection string our API will use to find the database.
+      # 'db' is the hostname of our postgres service defined below. Docker Compose provides this internal DNS.
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=assetgazedb;Username=assetgazeuser;Password=yoursecurepassword
+    depends_on:
+      - db # Tells Docker to start the 'db' service before starting the 'api' service
+
+  # Define our PostgreSQL database service
+  db:
+    container_name: assetgaze-db # A friendly name for our database container
+    image: postgres:16-alpine # Use the official PostgreSQL 16 image from Docker Hub
+    environment:
+      # These variables are used by the postgres image to initialize the database
+      - POSTGRES_DB=assetgazedb
+      - POSTGRES_USER=assetgazeuser
+      - POSTGRES_PASSWORD=yoursecurepassword
+    ports:
+      # Maps port 5432 inside the container to port 5432 on your Mac, so you can connect with a DB tool if needed.
+      - "5432:5432"
+    volumes:
+      # This creates a persistent volume. The data in your database will be saved here,
+      # so it will still be there even if you stop and restart the container.
+      - postgres_data:/var/lib/postgresql/data
+
+# This section defines the named volumes used by our services
+volumes:
+  postgres_data:
