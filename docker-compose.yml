@@ -21,7 +21,8 @@ services:
       # 'db' is the hostname of our postgres service defined below. Docker Compose provides this internal DNS.
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=assetgazedb;Username=assetgazeuser;Password=yoursecurepassword
     depends_on:
-      - db # Tells Docker to start the 'db' service before starting the 'api' service
+      db:
+        condition: service_healthy # Wait for the healthcheck to pass
 
   # Define our PostgreSQL database service
   db:
@@ -39,6 +40,12 @@ services:
       # This creates a persistent volume. The data in your database will be saved here,
       # so it will still be there even if you stop and restart the container.
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # This command checks if the postgres user can connect to the database
+      test: [ "CMD-SHELL", "pg_isready -U assetgazeuser -d assetgazedb" ]
+      interval: 5s   # Check every 5 seconds
+      timeout: 5s    # Wait up to 5 seconds for the command to respond
+      retries: 5     # Try up to 5 times before marking as unhealthy
 
 # This section defines the named volumes used by our services
 volumes:
