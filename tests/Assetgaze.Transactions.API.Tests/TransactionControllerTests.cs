@@ -1,41 +1,32 @@
-﻿using System.Net;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
+﻿// In: tests/Assetgaze.Transactions.API.Tests/TransactionControllerTests.cs
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace Assetgaze.Transactions.API.Tests;
 
 [TestFixture]
 public class TransactionControllerTests
 {
-    private WebApplicationFactory<Program> _factory;
-    private HttpClient _client;
+    private static AssetGazeApiFactory _factory = null!;
+    private HttpClient _client = null!;
 
     [OneTimeSetUp]
-    public void OneTimeSetUp()
+    public async Task OneTimeSetUp()
     {
-        _factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                // This code runs when the test server is being configured
-                builder.ConfigureServices(services =>
-                {
-                    // Find and remove the HttpsRedirection service
-                    var httpsRedirectionOptions = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(HttpsRedirectionOptions));
-                
-                    if (httpsRedirectionOptions != null)
-                    {
-                        services.Remove(httpsRedirectionOptions);
-                    }
-                });
-            });
+        _factory = new AssetGazeApiFactory();
+        await _factory.InitializeContainerAsync();
+        _client = _factory.CreateClient();
     }
 
-    [SetUp]
-    public void SetUp()
+    [OneTimeTearDown]
+    public async Task OneTimeTearDown()
     {
-        _client = _factory.CreateClient();
+        await _factory.DisposeContainerAsync();
+        _factory.Dispose();
+        _client.Dispose();
     }
 
     [Test]
@@ -48,26 +39,15 @@ public class TransactionControllerTests
             Quantity = 10,
             Price = 175.50,
             TransactionType = "Buy",
-            TransactionDate = "2025-06-09T10:00:00Z"
+            Currency = "USD",
+            TransactionDate = "2025-06-23T10:00:00Z"
         };
-        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(newTransaction), System.Text.Encoding.UTF8, "application/json");
+        var content = new StringContent(JsonSerializer.Serialize(newTransaction), System.Text.Encoding.UTF8, "application/json");
 
         // Act
         var response = await _client.PostAsync("/api/transactions", content);
 
         // Assert
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        _client.Dispose();
-    }
-
-    [OneTimeTearDown]
-    public void OneTimeTearDown()
-    {
-        _factory.Dispose();
     }
 }

@@ -1,39 +1,36 @@
-using System.Transactions;
-using LinqToDB;
+// In: src/Assetgaze.Transactions.API/Controllers/TransactionsController.cs
+
+using Assetgaze.Transactions.API;
+using Assetgaze.Transactions.API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Assetgaze.Transactions.API.Controllers;
-
 [ApiController]
-[Route("api/[controller]")] // This sets the URL to /api/transactions
+[Route("api/[controller]")]
 public class TransactionsController : ControllerBase
 {
-    private readonly AppDataConnection _db;
-    
-    public TransactionsController(AppDataConnection db)
+    private readonly ITransactionRepository _transactionRepository;
+
+    // Inject the INTERFACE, not the concrete class
+    public TransactionsController(ITransactionRepository transactionRepository)
     {
-        _db = db;
+        _transactionRepository = transactionRepository;
     }
-    
+
     [HttpPost]
     public async Task<IActionResult> PostTransaction([FromBody] Transaction transaction)
     {
         transaction.Id = Guid.NewGuid();
-
-        // Use the powerful LINQ-based API to insert the record
-        await _db.InsertAsync(transaction);
+        
+        // The controller's job is simple: delegate to the repository.
+        await _transactionRepository.AddAsync(transaction);
 
         return CreatedAtAction(nameof(GetTransactionById), new { id = transaction.Id }, transaction);
     }
-    
-    
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTransactionById(Guid id)
     {
-        // Use the queryable Transactions table and LINQ to find the record
-        var transaction = await _db.Transactions
-            .Where(t => t.Id == id)
-            .SingleOrDefaultAsync();
+        var transaction = await _transactionRepository.GetByIdAsync(id);
 
         if (transaction is null)
         {
