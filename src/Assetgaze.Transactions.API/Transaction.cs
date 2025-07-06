@@ -7,7 +7,7 @@ using LinqToDB.Mapping; // Add this using
 [Table("Transactions")] // Maps this class to the "Transactions" table
 public class Transaction
 {
-    [PrimaryKey, Identity] // Defines the primary key
+    [PrimaryKey]
     public Guid Id { get; set; }
 
     [Column("Ticker"), NotNull] // Maps this property to the "Ticker" column
