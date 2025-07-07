@@ -1,4 +1,4 @@
-namespace Assetgaze.Features.Transactions;
+namespace Assetgaze.Features.Transactions.DTOs;
 
 public class CreateTransactionRequest
 {

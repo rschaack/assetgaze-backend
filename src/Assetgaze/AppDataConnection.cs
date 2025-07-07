@@ -1,4 +1,5 @@
 using Assetgaze.Features.Transactions;
+using Assetgaze.Features.Users;
 using LinqToDB;
 using LinqToDB.Data;
 
@@ -13,4 +14,6 @@ public class AppDataConnection : DataConnection
     }
 
     public ITable<Transaction> Transactions => this.GetTable<Transaction>();
+
+    public ITable<User> Users => this.GetTable<User>();
 }

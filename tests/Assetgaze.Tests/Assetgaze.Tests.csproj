@@ -28,8 +28,4 @@
     <ProjectReference Include="..\..\src\Assetgaze\Assetgaze.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\Users\" />
-  </ItemGroup>
-
 </Project>

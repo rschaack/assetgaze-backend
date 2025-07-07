@@ -1,3 +1,5 @@
+using Assetgaze.Features.Transactions.DTOs;
+
 namespace Assetgaze.Features.Transactions;
 
 public class TransactionSaveService : ITransactionSaveService

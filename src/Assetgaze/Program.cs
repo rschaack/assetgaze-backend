@@ -2,6 +2,7 @@
 
 using Assetgaze;
 using Assetgaze.Features.Transactions;
+using Assetgaze.Features.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Services.AddControllers();
 // The repository itself will get IConfiguration to find the connection string.
 builder.Services.AddScoped<ITransactionRepository, Linq2DbTransactionRepository>();
 builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
+builder.Services.AddScoped<IUserRepository, Linq2DbUserRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 

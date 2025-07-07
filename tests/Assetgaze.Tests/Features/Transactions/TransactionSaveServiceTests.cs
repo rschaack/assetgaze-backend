@@ -1,6 +1,7 @@
 // In: tests/Assetgaze.Tests/TransactionSaveServiceTests.cs
 
 using Assetgaze.Features.Transactions;
+using Assetgaze.Features.Transactions.DTOs;
 
 // Or Services
 
