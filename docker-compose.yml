@@ -13,13 +13,22 @@ services:
       # Maps port 8080 inside the container to port 5001 on your Mac.
       # Format is "HOST:CONTAINER"
       - "5001:8080"
+      # --- ADD A NEW PORT MAPPING FOR HTTPS ---
+      # We'll map port 8081 inside the container to port 5002 on your Mac
+      - "5002:8081"
     environment:
       # Environment variables passed to our API service
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      # This is the connection string our API will use to find the database.
-      # 'db' is the hostname of our postgres service defined below. Docker Compose provides this internal DNS.
+      # --- MODIFY THE URLS TO INCLUDE HTTPS ---
+      - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      # --- ADD THESE ENVIRONMENT VARIABLES FOR KESTREL (the .NET web server) ---
+      - Kestrel__Certificates__Default__Path=/https/assetgaze.pfx
+      - Kestrel__Certificates__Default__Password=password # Use the same password as above
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=assetgazedb;Username=assetgazeuser;Password=yoursecurepassword
+      # --- ADD A VOLUME TO MOUNT THE CERTIFICATE ---
+    volumes:
+        - ~/.aspnet/https/assetgaze.pfx:/https/assetgaze.pfx:ro # Mount as read-only
     depends_on:
       db:
         condition: service_healthy # Wait for the healthcheck to pass
