@@ -1,6 +1,4 @@
-using Assetgaze.Transactions.API.Interfaces;
-
-namespace Assetgaze.Transactions.API.Repositories;
+namespace Assetgaze.Features.Transactions;
 
 public class TransactionSaveService : ITransactionSaveService
 {

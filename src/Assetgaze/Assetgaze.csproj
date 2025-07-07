@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <AssemblyName>Assetgaze</AssemblyName>
+    <RootNamespace>Assetgaze</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Assetgaze.Transactions.API.Tests" />
+    <InternalsVisibleTo Include="Assetgaze.Tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +34,10 @@
     <None Update="Migrations\Script0002-AddCurrencyToTransactions.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Users\" />
   </ItemGroup>
 
 </Project>

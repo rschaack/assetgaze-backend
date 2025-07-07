@@ -1,8 +1,8 @@
-// In: tests/Assetgaze.Transactions.API.Tests/FakeTransactionRepository.cs
+// In: tests/Assetgaze.Tests/FakeTransactionRepository.cs
 
-using Assetgaze.Transactions.API.Interfaces;
+using Assetgaze.Features.Transactions;
 
-namespace Assetgaze.Transactions.API.Tests;
+namespace Assetgaze.Tests.Features.Transactions;
 
 /// <summary>
 /// This is a "Fake" implementation of the repository for unit testing.

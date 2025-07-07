@@ -1,8 +1,11 @@
-namespace Assetgaze.Transactions.API;
+using LinqToDB.Mapping;
+
+namespace Assetgaze.Features.Transactions;
 
 
-// In: src/Assetgaze.Transactions.API/Transaction.cs
-using LinqToDB.Mapping; // Add this using
+// In: src/Assetgaze/Transaction.cs
+
+// Add this using
 
 [Table("Transactions")] // Maps this class to the "Transactions" table
 public class Transaction

@@ -1,7 +1,7 @@
-// In: src/Assetgaze.Transactions.API/Program.cs
-using Assetgaze.Transactions.API;
-using Assetgaze.Transactions.API.Interfaces;
-using Assetgaze.Transactions.API.Repositories;
+// In: src/Assetgaze/Program.cs
+
+using Assetgaze;
+using Assetgaze.Features.Transactions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,4 +25,7 @@ if (!string.IsNullOrEmpty(connectionString))
 app.MapControllers();
 app.Run();
 
-public partial class Program { }
+namespace Assetgaze
+{
+    public partial class Program { }
+}

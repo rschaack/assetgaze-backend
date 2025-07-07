@@ -5,11 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D12113E6-6AFB-4A55-BE14-125379D8DA53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assetgaze.Transactions.API.Tests", "tests\Assetgaze.Transactions.API.Tests\Assetgaze.Transactions.API.Tests.csproj", "{544D1EA8-1675-434C-817F-39DB58FDC2B4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assetgaze.Tests", "tests\Assetgaze.Tests\Assetgaze.Tests.csproj", "{544D1EA8-1675-434C-817F-39DB58FDC2B4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{99DB83A2-6885-4A72-93E3-72311E2F3E93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assetgaze.Transactions.API", "src\Assetgaze.Transactions.API\Assetgaze.Transactions.API.csproj", "{A7778DC1-ECD7-460A-9B87-0C3AFD9D474A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assetgaze", "src\Assetgaze\Assetgaze.csproj", "{A7778DC1-ECD7-460A-9B87-0C3AFD9D474A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,5 +1,5 @@
-// In: src/Assetgaze.Transactions.API/Abstractions/ITransactionRepository.cs
-namespace Assetgaze.Transactions.API.Interfaces;
+// In: src/Assetgaze/Abstractions/ITransactionRepository.cs
+namespace Assetgaze.Features.Transactions;
 
 public interface ITransactionRepository
 {

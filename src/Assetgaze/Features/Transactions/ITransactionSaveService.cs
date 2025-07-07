@@ -1,4 +1,4 @@
-namespace Assetgaze.Transactions.API.Interfaces;
+namespace Assetgaze.Features.Transactions;
 
 public interface ITransactionSaveService
 {

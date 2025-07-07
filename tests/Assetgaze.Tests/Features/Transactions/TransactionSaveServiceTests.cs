@@ -1,9 +1,10 @@
-// In: tests/Assetgaze.Transactions.API.Tests/TransactionSaveServiceTests.cs
+// In: tests/Assetgaze.Tests/TransactionSaveServiceTests.cs
 
-using Assetgaze.Transactions.API.Interfaces;
-using Assetgaze.Transactions.API.Repositories; // Or Services
+using Assetgaze.Features.Transactions;
 
-namespace Assetgaze.Transactions.API.Tests;
+// Or Services
+
+namespace Assetgaze.Tests.Features.Transactions;
 
 [TestFixture]
 public class TransactionSaveServiceTests

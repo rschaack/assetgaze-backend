@@ -1,8 +1,9 @@
-// In: src/Assetgaze.Transactions.API/MigrationManager.cs
-using DbUp;
-using System.Reflection;
+// In: src/Assetgaze/MigrationManager.cs
 
-namespace Assetgaze.Transactions.API;
+using System.Reflection;
+using DbUp;
+
+namespace Assetgaze;
 
 public static class MigrationManager
 {

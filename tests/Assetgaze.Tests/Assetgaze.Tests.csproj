@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <AssemblyName>Assetgaze.Tests</AssemblyName>
+    <RootNamespace>Assetgaze.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Assetgaze.Transactions.API\Assetgaze.Transactions.API.csproj" />
+    <ProjectReference Include="..\..\src\Assetgaze\Assetgaze.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Users\" />
   </ItemGroup>
 
 </Project>

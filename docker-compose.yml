@@ -8,7 +8,7 @@ services:
     container_name: assetgaze-api # A friendly name for our API container
     build:
       context: . # The build context is the current directory (the project root)
-      dockerfile: src/Assetgaze.Transactions.API/Dockerfile # The path to the Dockerfile we created
+      dockerfile: src/Assetgaze/Dockerfile # The path to the Dockerfile we created
     ports:
       # Maps port 8080 inside the container to port 5001 on your Mac.
       # Format is "HOST:CONTAINER"

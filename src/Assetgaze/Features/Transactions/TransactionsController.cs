@@ -1,8 +1,8 @@
-// In: src/Assetgaze.Transactions.API/Controllers/TransactionsController.cs
+// In: src/Assetgaze/Controllers/TransactionsController.cs
 
-using Assetgaze.Transactions.API;
-using Assetgaze.Transactions.API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+
+namespace Assetgaze.Features.Transactions;
 
 [ApiController]
 [Route("api/[controller]")]

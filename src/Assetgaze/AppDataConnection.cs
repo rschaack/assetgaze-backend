@@ -1,8 +1,8 @@
-using Assetgaze.Transactions.API;
+using Assetgaze.Features.Transactions;
 using LinqToDB;
 using LinqToDB.Data;
 
-namespace Assetgaze.Transactions.API;
+namespace Assetgaze;
     
 public class AppDataConnection : DataConnection
 {

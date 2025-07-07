@@ -1,7 +1,6 @@
-using Assetgaze.Transactions.API.Interfaces;
 using LinqToDB;
 
-namespace Assetgaze.Transactions.API.Repositories;
+namespace Assetgaze.Features.Transactions;
 
 public class Linq2DbTransactionRepository : ITransactionRepository
 {

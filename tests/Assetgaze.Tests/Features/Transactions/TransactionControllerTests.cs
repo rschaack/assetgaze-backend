@@ -1,11 +1,9 @@
-﻿// In: tests/Assetgaze.Transactions.API.Tests/TransactionControllerTests.cs
-using System.Net;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿// In: tests/Assetgaze.Tests/TransactionControllerTests.cs
 
-namespace Assetgaze.Transactions.API.Tests;
+using System.Net;
+using System.Text.Json;
+
+namespace Assetgaze.Tests.Features.Transactions;
 
 [TestFixture]
 public class TransactionControllerTests

@@ -1,4 +1,4 @@
-// In: tests/Assetgaze.Transactions.API.Tests/AssetGazeApiFactory.cs
+// In: tests/Assetgaze.Tests/AssetGazeApiFactory.cs
 
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Assetgaze.Transactions.API.Tests;
+namespace Assetgaze.Tests;
 
 /// <summary>
 /// A custom WebApplicationFactory for integration tests. Its responsibilities are:
