@@ -1,3 +1,4 @@
+using Assetgaze.Domain;
 using LinqToDB.Mapping;
 
 namespace Assetgaze.Features.Transactions;
@@ -13,21 +14,48 @@ public class Transaction
     [PrimaryKey]
     public Guid Id { get; set; }
 
-    [Column("Ticker"), NotNull] // Maps this property to the "Ticker" column
-    public string Ticker { get; set; }
-
-    [Column("Quantity")]
-    public int Quantity { get; set; }
-
-    [Column("Price")]
-    public decimal Price { get; set; }
-
     [Column("TransactionType"), NotNull]
-    public string TransactionType { get; set; }
+    public TransactionType TransactionType { get; set; }
+    
+    [Column("BrokerDealReference")]
+    public string? BrokerDealReference { get; set; }
+    
+    [Column("BrokerId"), NotNull]
+    public Guid BrokerId { get; set; }
+    
+    [Column("AccountId"), NotNull]
+    public Guid AccountId { get; set; }
 
-    [Column("TransactionDate")]
+    [Column("TaxWrapper"), NotNull]
+    public TaxWrapper TaxWrapper { get; set; }
+    
+    [Column("ISIN"), NotNull] 
+    public string ISIN { get; set; } = string.Empty; // This is how we represent the asset for now
+    
+    [Column("TransactionDate"), NotNull]
     public DateTime TransactionDate { get; set; }
     
-    [Column("Currency"), NotNull]
-    public string Currency { get; set; }
+    [Column("Quantity")]
+    public decimal? Quantity { get; set; }
+
+    [Column("NativePrice")]
+    public decimal? NativePrice { get; set; }
+    
+    [Column("LocalPrice")]
+    public decimal? LocalPrice { get; set; }
+    
+    [Column("Consideration"), NotNull]
+    public decimal Consideration { get; set; }
+    
+    [Column("BrokerCharge")]
+    public decimal? BrokerCharge { get; set; }
+    
+    [Column("StampDuty")]
+    public decimal? StampDuty { get; set; }
+    
+    [Column("FxCharge")]
+    public decimal? FxCharge { get; set; }
+    
+    [Column("AccruedInterest")]
+    public decimal? AccruedInterest { get; set; }
 }

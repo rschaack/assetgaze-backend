@@ -1,4 +1,0 @@
-
-
-ALTER TABLE "Transactions"
-    ADD COLUMN "Currency" VARCHAR(3) NOT NULL DEFAULT 'GBP';

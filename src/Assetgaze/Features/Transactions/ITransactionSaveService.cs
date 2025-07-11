@@ -4,5 +4,5 @@ namespace Assetgaze.Features.Transactions;
 
 public interface ITransactionSaveService
 {
-    Task<Transaction> SaveTransactionAsync(CreateTransactionRequest request);
+    Task<Transaction> SaveTransactionAsync(CreateTransactionRequest request, Guid loggedInUserId);
 }

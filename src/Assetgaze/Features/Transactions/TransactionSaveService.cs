@@ -1,6 +1,7 @@
+// In: src/Assetgaze/Features/Transactions/Services/TransactionSaveService.cs
 using Assetgaze.Features.Transactions.DTOs;
 
-namespace Assetgaze.Features.Transactions;
+namespace Assetgaze.Features.Transactions.Services;
 
 public class TransactionSaveService : ITransactionSaveService
 {
@@ -11,24 +12,35 @@ public class TransactionSaveService : ITransactionSaveService
         _transactionRepository = transactionRepository;
     }
 
-    public async Task<Transaction> SaveTransactionAsync(CreateTransactionRequest request)
+    // The method signature doesn't need to change, but the mapping logic inside MUST be updated.
+    public async Task<Transaction> SaveTransactionAsync(CreateTransactionRequest request, Guid loggedInUserId)
     {
-        // 1. Create the domain entity from the request
         var newTransaction = new Transaction
         {
-            Id = Guid.NewGuid(), // The service is responsible for creating the new ID
-            Ticker = request.Ticker,
-            Quantity = request.Quantity,
-            Price = request.Price,
+            Id = Guid.NewGuid(),
+            // OwnerId = loggedInUserId, // We will add these back when auth is fully wired up
+            // EnteredById = loggedInUserId,
+
+            // --- Map all the new fields from the DTO to the entity ---
             TransactionType = request.TransactionType,
+            BrokerDealReference = request.BrokerDealReference,
+            BrokerId = request.BrokerId,
+            AccountId = request.AccountId,
+            TaxWrapper = request.TaxWrapper,
+            ISIN = request.ISIN,
             TransactionDate = request.TransactionDate,
-            Currency = request.Currency
+            Quantity = request.Quantity,
+            NativePrice = request.NativePrice,
+            LocalPrice = request.LocalPrice,
+            Consideration = request.Consideration,
+            BrokerCharge = request.BrokerCharge,
+            StampDuty = request.StampDuty,
+            FxCharge = request.FxCharge,
+            AccruedInterest = request.AccruedInterest
         };
 
-        // 2. Delegate the persistence to the repository
         await _transactionRepository.AddAsync(newTransaction);
-
-        // 3. Return the newly created entity
+        
         return newTransaction;
     }
 }

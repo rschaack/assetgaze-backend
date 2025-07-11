@@ -1,24 +1,26 @@
-// In: tests/Assetgaze.Tests/TransactionSaveServiceTests.cs
+// In: tests/Assetgaze.Tests/Features/Transactions/TransactionSaveServiceTests.cs
 
+using Assetgaze.Domain;
 using Assetgaze.Features.Transactions;
 using Assetgaze.Features.Transactions.DTOs;
-
-// Or Services
+using Assetgaze.Features.Transactions.Services;
 
 namespace Assetgaze.Tests.Features.Transactions;
+
+
 
 [TestFixture]
 public class TransactionSaveServiceTests
 {
-    private FakeTransactionRepository _fakeRepo; // Changed from Mock<T> to our concrete fake
-    private ITransactionSaveService _service;
+    private FakeTransactionRepository _fakeRepo = null!;
+    private ITransactionSaveService _service = null!;
 
     [SetUp]
     public void SetUp()
     {
         // For each test, create a new instance of our Fake Repository
         _fakeRepo = new FakeTransactionRepository();
-
+        
         // Create the service we are testing, injecting the fake implementation
         _service = new TransactionSaveService(_fakeRepo);
     }
@@ -27,27 +29,35 @@ public class TransactionSaveServiceTests
     public async Task SaveTransactionAsync_WithValidRequest_SavesTransactionToRepository()
     {
         // Arrange
+        var loggedInUserId = Guid.NewGuid(); // A dummy user ID for the test
         var request = new CreateTransactionRequest
         {
-            Ticker = "MSFT",
-            Quantity = 100,
-            Price = 300.50m,
-            TransactionType = "Buy",
-            Currency = "USD",
-            TransactionDate = DateTime.UtcNow
+            TransactionType = TransactionType.Buy,
+            BrokerId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            TaxWrapper = TaxWrapper.ISA,
+            ISIN = "US0378331005",
+            TransactionDate = DateTime.UtcNow,
+            Quantity = 10,
+            NativePrice = 200.00m,
+            LocalPrice = 200.00m,
+            Consideration = 2000.00m
         };
 
         // Act
-        var result = await _service.SaveTransactionAsync(request);
+        // Call the service method we want to test
+        var result = await _service.SaveTransactionAsync(request, loggedInUserId);
 
         // Assert
-        // Instead of verifying a mock, we now assert against the state of our Fake Repository.
+        // 1. Verify that a transaction was actually "saved" to our fake repository
         Assert.That(_fakeRepo.Transactions.Count, Is.EqualTo(1));
-
+        
         var savedTransaction = _fakeRepo.Transactions.First();
 
+        // 2. Verify that the mapping from the DTO to the entity was correct
         Assert.That(savedTransaction, Is.Not.Null);
-        Assert.That(savedTransaction.Id, Is.EqualTo(result.Id)); // Check if the returned ID matches the saved one
-        Assert.That(savedTransaction.Ticker, Is.EqualTo("MSFT"));
+        Assert.That(savedTransaction.Id, Is.EqualTo(result.Id));
+        Assert.That(savedTransaction.ISIN, Is.EqualTo(request.ISIN));
+        Assert.That(savedTransaction.TransactionType, Is.EqualTo(request.TransactionType));
     }
 }
