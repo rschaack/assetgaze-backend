@@ -8,12 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// This is the only DI registration needed for our data layer.
-// The repository itself will get IConfiguration to find the connection string.
+
+//builder.Services.AddScoped<ITransactionRepository, Linq2DbTransactionRepository>(); 
+//builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
+//builder.Services.AddScoped<IUserRepository, Linq2DbUserRepository>();
+//builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddScoped<ITransactionRepository, Linq2DbTransactionRepository>();
-builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
 builder.Services.AddScoped<IUserRepository, Linq2DbUserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
 
 var app = builder.Build();
 

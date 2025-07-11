@@ -1,7 +1,9 @@
-﻿// In: tests/Assetgaze.Tests/TransactionControllerTests.cs
-
+﻿// In: tests/Assetgaze.Tests/Features/Transactions/TransactionControllerTests.cs
 using System.Net;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace Assetgaze.Tests.Features.Transactions;
 
@@ -30,7 +32,7 @@ public class TransactionControllerTests
     [Test]
     public async Task PostTransaction_WhenCalledWithValidData_ReturnsCreatedStatus()
     {
-        // Arrange
+        // Your test logic remains the same.
         var newTransaction = new
         {
             Ticker = "AAPL",
@@ -41,11 +43,9 @@ public class TransactionControllerTests
             TransactionDate = "2025-06-23T10:00:00Z"
         };
         var content = new StringContent(JsonSerializer.Serialize(newTransaction), System.Text.Encoding.UTF8, "application/json");
-
-        // Act
+        
         var response = await _client.PostAsync("/api/transactions", content);
 
-        // Assert
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
     }
 }

@@ -16,7 +16,7 @@ services:
       - ASPNETCORE_URLS=https://+:8081;http://+:8080
       # --- ADD THESE ENVIRONMENT VARIABLES FOR KESTREL (the .NET web server) ---
       - Kestrel__Certificates__Default__Path=/https/assetgaze.pfx
-      - Kestrel__Certificates__Default__Password=password # Use the same password as above
+      - Kestrel__Certificates__Default__Password=dev-password # Use the same password as above
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=assetgazedb;Username=assetgazeuser;Password=yoursecurepassword
     volumes:
       # This maps the .pfx file on your Mac to the path inside the container that Kestrel is looking for.
