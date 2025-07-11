@@ -1,11 +1,14 @@
 // In: tests/Assetgaze.Tests/AssetGazeApiFactory.cs
 
+using System.Net;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace Assetgaze.Tests;
 
@@ -38,24 +41,38 @@ public class AssetGazeApiFactory : WebApplicationFactory<Program>
     /// </summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        
+        // The path to the certificate on your HOST machine (your MacBook)
+        var certPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
+            ".aspnet", 
+            "https", 
+            "assetgaze.pfx");
+
+        // Load the certificate into memory using the password
+        var certificate = new X509Certificate2(certPath, "dev-password");
+
+        // This method directly manipulates the Kestrel server options
+        builder.ConfigureKestrel(options =>
+        {
+            options.Listen(IPAddress.Any, 8081, listenOptions =>
+            {
+                // Use the in-memory certificate instead of a file path
+                listenOptions.UseHttps(certificate);
+            });
+        });
+    
+        // The logging and AppConfiguration from before remain the same
         builder.ConfigureLogging(logging =>
         {
             logging.ClearProviders();
             logging.AddConsole();
-            logging.SetMinimumLevel(LogLevel.Trace); // Log everything
+            logging.SetMinimumLevel(LogLevel.Trace);
         });
-        
+    
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // Remove any other configuration sources to ensure a clean slate.
             config.Sources.Clear();
-            
-            // Step 1: Run our database migrations using the dynamic connection string for the test container.
             MigrationManager.ApplyMigrations(this.ConnectionString);
-
-            // Step 2: Add our test connection string to the application's configuration.
-            // This ensures that when the real Program.cs code runs, it finds this connection string.
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:DefaultConnection"] = this.ConnectionString
