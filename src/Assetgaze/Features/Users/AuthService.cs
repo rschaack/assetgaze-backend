@@ -1,14 +1,21 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Assetgaze.Features.Users.DTOs;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Assetgaze.Features.Users;
 
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IConfiguration _configuration;
 
-    public AuthService(IUserRepository userRepository)
+    public AuthService(IUserRepository userRepository, IConfiguration configuration)
     {
         _userRepository = userRepository;
+        _configuration = configuration;
     }
 
     public async Task<bool> RegisterAsync(RegisterRequest request)
@@ -42,24 +49,45 @@ public class AuthService : IAuthService
     {
         // 1. Find the user by email
         var user = await _userRepository.GetByEmailAsync(request.Email);
-        if (user == null)
-        {
-            // User not found
-            return null;
-        }
+        if (user == null) { return null; }
 
         // 2. Verify the password against the stored hash
         var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-        if (!isPasswordValid)
-        {
-            // Invalid password
-            return null;
-        }
+        if (!isPasswordValid) { return null; }
 
         // 3. Login is successful. For now, we return a placeholder token.
         //    In the next step, we will generate a real JWT here.
-        var token = "success-placeholder-token"; 
-
+        var token = GenerateJwtToken(user); 
         return token;
+    }
+    
+    private string GenerateJwtToken(User user)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        
+        // Get the secret key from appsettings.json
+        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
+
+        // Define the token's claims (the data it will hold)
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()), // Subject (standard claim for user ID)
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // JWT ID (standard claim for a unique token ID)
+        };
+
+        // Create the token descriptor
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.UtcNow.AddHours(1), // Token is valid for 1 hour
+            Issuer = _configuration["Jwt:Issuer"],
+            Audience = _configuration["Jwt:Audience"],
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        // Create and write the token
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
     }
 }

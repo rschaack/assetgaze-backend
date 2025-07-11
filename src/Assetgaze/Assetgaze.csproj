@@ -16,6 +16,7 @@
     <PackageReference Include="dbup-postgresql" Version="6.0.3" />
     <PackageReference Include="linq2db.AspNet" Version="5.4.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
   </ItemGroup>
 
   <ItemGroup>

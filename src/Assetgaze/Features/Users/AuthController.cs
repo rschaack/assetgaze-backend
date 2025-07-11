@@ -27,4 +27,17 @@ public class AuthController : Controller
 
         return Ok("User registered successfully.");
     }
+    
+    [HttpPost("login")] // This maps to the URL: POST /api/auth/login
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        var token = await _authService.LoginAsync(request);
+
+        if (token is null)
+        {
+            return Unauthorized("Invalid email or password.");
+        }
+
+        return Ok(new { Token = token });
+    }
 }
