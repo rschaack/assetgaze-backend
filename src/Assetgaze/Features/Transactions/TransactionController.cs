@@ -11,13 +11,13 @@ namespace Assetgaze.Features.Transactions;
 [Authorize] // This secures the entire controller
 public class TransactionsController : ControllerBase
 {
-    private readonly ITransactionSaveService _transactionSaveService;
+    private readonly ITransactionService _transactionService;
     private readonly ITransactionRepository _transactionRepository;
 
     // Inject the new service and the repository
-    public TransactionsController(ITransactionSaveService transactionSaveService, ITransactionRepository transactionRepository)
+    public TransactionsController(ITransactionService transactionService, ITransactionRepository transactionRepository)
     {
-        _transactionSaveService = transactionSaveService;
+        _transactionService = transactionService;
         _transactionRepository = transactionRepository;
     }
 
@@ -33,7 +33,7 @@ public class TransactionsController : ControllerBase
         }
         
         var userId = Guid.Parse(userIdString);
-        var createdTransaction = await _transactionSaveService.SaveTransactionAsync(request, userId);
+        var createdTransaction = await _transactionService.SaveTransactionAsync(request, userId);
 
         return CreatedAtAction(nameof(GetTransactionById), new { id = createdTransaction.Id }, createdTransaction);
     }

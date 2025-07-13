@@ -10,10 +10,10 @@ namespace Assetgaze.Tests.Features.Transactions;
 
 
 [TestFixture]
-public class TransactionSaveServiceTests
+public class TransactionServiceTests
 {
     private FakeTransactionRepository _fakeRepo = null!;
-    private ITransactionSaveService _service = null!;
+    private ITransactionService _service = null!;
 
     [SetUp]
     public void SetUp()
@@ -22,7 +22,7 @@ public class TransactionSaveServiceTests
         _fakeRepo = new FakeTransactionRepository();
         
         // Create the service we are testing, injecting the fake implementation
-        _service = new TransactionSaveService(_fakeRepo);
+        _service = new TransactionService(_fakeRepo);
     }
 
     [Test]

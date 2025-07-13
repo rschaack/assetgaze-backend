@@ -3,11 +3,11 @@ using Assetgaze.Features.Transactions.DTOs;
 
 namespace Assetgaze.Features.Transactions.Services;
 
-public class TransactionSaveService : ITransactionSaveService
+public class TransactionService : ITransactionService
 {
     private readonly ITransactionRepository _transactionRepository;
 
-    public TransactionSaveService(ITransactionRepository transactionRepository)
+    public TransactionService(ITransactionRepository transactionRepository)
     {
         _transactionRepository = transactionRepository;
     }
@@ -38,5 +38,17 @@ public class TransactionSaveService : ITransactionSaveService
         await _transactionRepository.AddAsync(newTransaction);
         
         return newTransaction;
+    }
+    
+    public async Task<Transaction?> UpdateTransactionAsync(Guid transactionId, UpdateTransactionRequest request, Guid loggedInUserId)
+    {
+        // We will implement this logic next
+        throw new NotImplementedException();
+    }
+
+    public async Task<bool> DeleteTransactionAsync(Guid transactionId, Guid loggedInUserId)
+    {
+        // We will implement this logic next
+        throw new NotImplementedException();
     }
 }

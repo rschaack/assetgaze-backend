@@ -46,7 +46,7 @@ builder.Services.AddControllers();
 
 // Transaction Feature
 builder.Services.AddScoped<ITransactionRepository, Linq2DbTransactionRepository>();
-builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 // User Feature
 builder.Services.AddScoped<IUserRepository, Linq2DbUserRepository>();
