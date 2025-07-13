@@ -1,6 +1,4 @@
 
-using Assetgaze.Domain;
-
 namespace Assetgaze.Features.Brokers.DTOs;
 
 public class CreateBrokerRequest
