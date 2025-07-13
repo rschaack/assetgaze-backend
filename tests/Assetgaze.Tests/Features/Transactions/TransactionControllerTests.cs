@@ -8,6 +8,7 @@ using Assetgaze.Features.Transactions.DTOs;
 using LinqToDB;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Transactions;
 using Assetgaze.Domain;
 using Assetgaze.Features.Accounts;
 using Assetgaze.Features.Brokers;
@@ -83,7 +84,7 @@ public class TransactionControllerTests
     }
 
     [Test]
-    public async Task PostTransaction_WhenCalledWithValidData_ReturnsCreatedStatus()
+    public async Task PostTransaction_WhenCalledWithValidData_CreatesAndRetrievesTransaction()
     {
         // Arrange
         AuthenticateClient(_seededUserId);
@@ -104,10 +105,31 @@ public class TransactionControllerTests
         var content = new StringContent(JsonSerializer.Serialize(newTransaction), System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/transactions", content);
+        var postResponse = await _client.PostAsync("/api/transactions", content);
 
         // Assert
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        
+        var createdTransaction = JsonSerializer.Deserialize<Transaction>(
+            await postResponse.Content.ReadAsStringAsync(), 
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    
+        Assert.That(createdTransaction, Is.Not.Null);
+
+        // 2. Make a GET request to retrieve the transaction we just created
+        var getResponse = await _client.GetAsync($"/api/transactions/{createdTransaction.Id}");
+        Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // 3. Deserialize the GET response and assert its values
+        var retrievedTransaction = JsonSerializer.Deserialize<Transaction>(
+            await getResponse.Content.ReadAsStringAsync(),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    
+        Assert.That(retrievedTransaction, Is.Not.Null);
+        Assert.That(retrievedTransaction.Id, Is.EqualTo(createdTransaction.Id));
+        Assert.That(retrievedTransaction.ISIN, Is.EqualTo(createdTransaction.ISIN));
+        Assert.That(retrievedTransaction.Consideration, Is.EqualTo(createdTransaction.Consideration));
+
     }
     
     private static string GenerateTestJwtToken(Guid userId)

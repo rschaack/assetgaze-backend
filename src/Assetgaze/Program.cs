@@ -1,13 +1,17 @@
-// In: src/Assetgaze/Program.cs
+using Serilog;
 using System.Text;
 using Assetgaze;
 using Assetgaze.Features.Transactions;
 using Assetgaze.Features.Transactions.Services;
 using Assetgaze.Features.Users;
+using Assetgaze.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) => 
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 // --- ADD AUTHENTICATION & AUTHORIZATION SERVICES ---
 builder.Services.AddAuthentication(options =>
@@ -41,6 +45,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseSerilogRequestLogging();
 
 // Run migrations on startup for local development.
 var connectionString = app.Configuration.GetConnectionString("DefaultConnection");
