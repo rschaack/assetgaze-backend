@@ -1,6 +1,8 @@
 using Serilog;
 using System.Text;
 using Assetgaze;
+using Assetgaze.Features.Brokers;
+using Assetgaze.Features.Brokers.Services;
 using Assetgaze.Features.Transactions;
 using Assetgaze.Features.Transactions.Services;
 using Assetgaze.Features.Users;
@@ -39,10 +41,19 @@ builder.Services.AddAuthorization();
 
 // Add your other services
 builder.Services.AddControllers();
+
+// Transaction Feature
 builder.Services.AddScoped<ITransactionRepository, Linq2DbTransactionRepository>();
+builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
+
+// User Feature
 builder.Services.AddScoped<IUserRepository, Linq2DbUserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITransactionSaveService, TransactionSaveService>();
+
+// Broker Feature (The new lines to add)
+builder.Services.AddScoped<IBrokerRepository, Linq2DbBrokerRepository>();
+builder.Services.AddScoped<IBrokerSaveService, BrokerSaveService>();
+
 
 var app = builder.Build();
 
