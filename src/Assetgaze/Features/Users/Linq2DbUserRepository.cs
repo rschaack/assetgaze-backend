@@ -30,4 +30,10 @@ public class Linq2DbUserRepository : IUserRepository
         await using var db = new AppDataConnection(_connectionString);
         await db.InsertAsync(user);
     }
+    
+    public async Task UpdateAsync(User user)
+    {
+        await using var db = new AppDataConnection(_connectionString);
+        await db.UpdateAsync(user);
+    }
 }

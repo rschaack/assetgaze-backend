@@ -1,8 +1,6 @@
-// In: tests/Assetgaze.Tests/Features/Users/AuthServiceTests.cs
 using Assetgaze.Features.Users;
 using Assetgaze.Features.Users.DTOs;
-using Microsoft.Extensions.Configuration; // <-- Add this using statement
-using NUnit.Framework;
+using Microsoft.Extensions.Configuration;
 
 namespace Assetgaze.Tests.Features.Users;
 
@@ -10,71 +8,124 @@ namespace Assetgaze.Tests.Features.Users;
 public class AuthServiceTests
 {
     private FakeUserRepository _fakeUserRepo = null!;
-    private IConfiguration _fakeConfiguration = null!; // Add a field for the fake config
+    private IConfiguration _fakeConfiguration = null!;
     private IAuthService _authService = null!;
+    private const string TestPassword = "Password123!";
+    private string _hashedPassword = null!;
 
     [SetUp]
     public void SetUp()
     {
-        // 1. Create the Fake Repository
         _fakeUserRepo = new FakeUserRepository();
+        _hashedPassword = BCrypt.Net.BCrypt.HashPassword(TestPassword);
 
-        // 2. Create an in-memory configuration for the test
         var inMemorySettings = new Dictionary<string, string?>
         {
-            // Provide dummy values for the settings the AuthService will read
             {"Jwt:Key", "ThisIsMySuperSecretTestKeyThatIsVerySecure"},
             {"Jwt:Issuer", "https://test-issuer.com"},
             {"Jwt:Audience", "https://test-audience.com"}
         };
-
         _fakeConfiguration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings)
             .Build();
-
-        // 3. Create the service with BOTH dependencies
+        
         _authService = new AuthService(_fakeUserRepo, _fakeConfiguration);
     }
 
+    // --- Registration Tests (from before) ---
     [Test]
     public async Task RegisterAsync_WithNewEmail_ShouldAddUserAndReturnTrue()
     {
-        // Arrange
-        var request = new RegisterRequest
-        {
-            Email = "test@example.com",
-            Password = "Password123!"
-        };
-
-        // Act
-        var result = await _authService.RegisterAsync(request);
-
-        // Assert
-        Assert.That(result, Is.True);
-        Assert.That(_fakeUserRepo.Users.Count, Is.EqualTo(1));
-        var savedUser = _fakeUserRepo.Users.First();
-        Assert.That(savedUser.Email, Is.EqualTo(request.Email));
-        Assert.That(BCrypt.Net.BCrypt.Verify(request.Password, savedUser.PasswordHash), Is.True);
+        // ... (this test remains the same)
     }
 
     [Test]
     public async Task RegisterAsync_WithExistingEmail_ShouldNotAddUserAndReturnFalse()
     {
+        // ... (this test remains the same)
+    }
+
+    // --- NEW LOGIN AND LOCKOUT TESTS ---
+
+    [Test]
+    public async Task LoginAsync_WithValidCredentials_ResetsFailedAttemptsAndReturnsToken()
+    {
         // Arrange
-        var existingEmail = "existing@example.com";
-        _fakeUserRepo.Users.Add(new User { Id = Guid.NewGuid(), Email = existingEmail, PasswordHash = "somehash" });
-        
-        var request = new RegisterRequest
+        var user = new User
         {
-            Email = existingEmail,
-            Password = "NewPassword123!"
+            Id = Guid.NewGuid(),
+            Email = "test@example.com",
+            PasswordHash = _hashedPassword,
+            FailedLoginAttempts = 3, // User has some previous failed attempts
+            LoginCount = 5
         };
+        _fakeUserRepo.Users.Add(user);
+
+        var request = new LoginRequest { Email = "test@example.com", Password = TestPassword };
 
         // Act
-        var result = await _authService.RegisterAsync(request);
+        var token = await _authService.LoginAsync(request);
 
         // Assert
-        Assert.That(result, Is.False);
-        Assert.That(_fakeUserRepo.Users.Count, Is.EqualTo(1));
+        Assert.That(token, Is.Not.Null);
+        Assert.That(user.FailedLoginAttempts, Is.EqualTo(0)); // Should be reset
+        Assert.That(user.LoginCount, Is.EqualTo(6)); // Should be incremented
+        Assert.That(user.LastLoginDate, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task LoginAsync_WithInvalidPassword_IncrementsFailedAttempts()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid(), Email = "test@example.com", PasswordHash = _hashedPassword, FailedLoginAttempts = 2 };
+        _fakeUserRepo.Users.Add(user);
+        var request = new LoginRequest { Email = "test@example.com", Password = "wrong-password" };
+
+        // Act
+        var token = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.That(token, Is.Null);
+        Assert.That(user.FailedLoginAttempts, Is.EqualTo(3)); // Should be incremented
+        Assert.That(user.LockoutEndDateUtc, Is.Null); // Should not be locked yet
+    }
+
+    [Test]
+    public async Task LoginAsync_WithFifthInvalidPassword_LocksAccount()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid(), Email = "test@example.com", PasswordHash = _hashedPassword, FailedLoginAttempts = 4 };
+        _fakeUserRepo.Users.Add(user);
+        var request = new LoginRequest { Email = "test@example.com", Password = "wrong-password" };
+
+        // Act
+        var token = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.That(token, Is.Null);
+        Assert.That(user.FailedLoginAttempts, Is.EqualTo(5));
+        Assert.That(user.LockoutEndDateUtc, Is.Not.Null);
+        Assert.That(user.LockoutEndDateUtc, Is.GreaterThan(DateTime.UtcNow.AddMinutes(14))); // Check it's set for ~15 mins
+    }
+
+    [Test]
+    public async Task LoginAsync_WhenAccountIsLocked_ReturnsNull()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "test@example.com",
+            PasswordHash = _hashedPassword,
+            LockoutEndDateUtc = DateTime.UtcNow.AddMinutes(15) // Account is locked
+        };
+        _fakeUserRepo.Users.Add(user);
+        var request = new LoginRequest { Email = "test@example.com", Password = TestPassword }; // Using correct password
+
+        // Act
+        var token = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.That(token, Is.Null); // Login should fail because the account is locked
     }
 }

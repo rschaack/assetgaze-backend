@@ -36,7 +36,10 @@ public class AuthService : IAuthService
         {
             Id = Guid.NewGuid(),
             Email = request.Email,
-            PasswordHash = hashedPassword
+            PasswordHash = hashedPassword,
+            CreatedDate = DateTime.UtcNow,
+            FailedLoginAttempts = 0,
+            LoginCount = 0
         };
 
         // 4. Save the new user to the database
@@ -47,15 +50,35 @@ public class AuthService : IAuthService
 
     public async Task<string?> LoginAsync(LoginRequest request)
     {
-        // 1. Find the user by email
+        // Find the user by email
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user == null) { return null; }
 
-        // 2. Verify the password against the stored hash
+        if (user.LockoutEndDateUtc.HasValue && user.LockoutEndDateUtc.Value > DateTime.UtcNow)
+        { return null; }
+        
+        // Verify the password against the stored hash
         var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-        if (!isPasswordValid) { return null; }
+        if (!isPasswordValid)
+        {
+            // --- HANDLE FAILED LOGIN ---
+            user.FailedLoginAttempts++;
+        
+            // Lock account after 5 failed attempts
+            if (user.FailedLoginAttempts >= 5)
+            {
+                user.LockoutEndDateUtc = DateTime.UtcNow.AddMinutes(15);
+            }
+
+            await _userRepository.UpdateAsync(user);
+            return null;
+        }
 
         // 3. Login is successful. For now, we return a placeholder token.
+        user.FailedLoginAttempts = 0;
+        user.LockoutEndDateUtc = null; // Clear any previous lock
+        user.LoginCount++;
+        user.LastLoginDate = DateTime.UtcNow;
         //    In the next step, we will generate a real JWT here.
         var token = GenerateJwtToken(user); 
         return token;

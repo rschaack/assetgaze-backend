@@ -1,14 +1,13 @@
 using Assetgaze.Features.Users;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Assetgaze.Tests.Features.Users;
 
-/// <summary>
-/// This is a "Fake" implementation of the repository for unit testing the AuthService.
-/// It uses an in-memory list to simulate database behavior.
-/// </summary>
 public class FakeUserRepository : IUserRepository
 {
-    // This public list allows our tests to inspect the "database" state after an action.
     public readonly List<User> Users = new();
 
     public Task<User?> GetByEmailAsync(string email)
@@ -20,6 +19,13 @@ public class FakeUserRepository : IUserRepository
     public Task AddAsync(User user)
     {
         Users.Add(user);
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAsync(User user)
+    {
+        // For the fake, we just assume the update works.
+        // The list holds the reference, so changes to the user object are automatically "persisted".
         return Task.CompletedTask;
     }
 }
