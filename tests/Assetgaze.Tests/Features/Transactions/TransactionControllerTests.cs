@@ -13,6 +13,7 @@ using Assetgaze.Domain;
 using Assetgaze.Features.Accounts;
 using Assetgaze.Features.Brokers;
 using Assetgaze.Features.Users;
+using Assetgaze.Features.Transactions;
 using Microsoft.Extensions.Configuration;
 
 namespace Assetgaze.Tests.Features.Transactions;
@@ -110,7 +111,7 @@ public class TransactionControllerTests
         // Assert
         Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         
-        var createdTransaction = JsonSerializer.Deserialize<Transaction>(
+        var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await postResponse.Content.ReadAsStringAsync(), 
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     
@@ -121,7 +122,7 @@ public class TransactionControllerTests
         Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         // 3. Deserialize the GET response and assert its values
-        var retrievedTransaction = JsonSerializer.Deserialize<Transaction>(
+        var retrievedTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await getResponse.Content.ReadAsStringAsync(),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     
