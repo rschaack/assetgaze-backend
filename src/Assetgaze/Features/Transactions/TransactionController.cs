@@ -28,12 +28,11 @@ public class TransactionsController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userIdString is null)
         {
+            // This should not happen if [Authorize] is working, but it's a good safeguard.
             return Unauthorized();
         }
-
+        
         var userId = Guid.Parse(userIdString);
-
-        // Pass the request DTO and the user's ID to the service.
         var createdTransaction = await _transactionSaveService.SaveTransactionAsync(request, userId);
 
         return CreatedAtAction(nameof(GetTransactionById), new { id = createdTransaction.Id }, createdTransaction);

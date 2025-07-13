@@ -12,6 +12,7 @@ using Assetgaze.Domain;
 using Assetgaze.Features.Accounts;
 using Assetgaze.Features.Brokers;
 using Assetgaze.Features.Users;
+using Microsoft.Extensions.Configuration;
 
 namespace Assetgaze.Tests.Features.Transactions;
 
@@ -24,7 +25,7 @@ public class TransactionControllerTests
     private HttpClient _client = null!;
     private static Guid _seededBrokerId;
     private static Guid _seededAccountId;
-    private static Guid _seededUserId; // Field to hold our valid user's ID
+    private static Guid _seededUserId;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -32,27 +33,39 @@ public class TransactionControllerTests
         _factory = new AssetGazeApiFactory();
         await _factory.InitializeContainerAsync();
         
-        // The client must be created here to trigger the migrations in the factory
-        _client = _factory.CreateClient();
+        // Step 1: Run migrations directly, using the connection string from the now-running container.
+        MigrationManager.ApplyMigrations(_factory.ConnectionString);
         
-        // Now that tables exist, we can connect and seed data
+        // Step 2: Seed the database with prerequisite data.
         await using var db = new AppDataConnection(_factory.ConnectionString);
-
-        // --- THIS IS THE FIX: SEED A USER ---
+        
         var user = new User { Id = Guid.NewGuid(), Email = "test@user.com", PasswordHash = "some_hash" };
         await db.InsertAsync(user);
-        _seededUserId = user.Id; // Store the ID of the user we just created
-        // ------------------------------------
+        _seededUserId = user.Id;
 
-        // Seed Broker
         var broker = new Broker { Id = Guid.NewGuid(), Name = "Test Broker" };
         await db.InsertAsync(broker);
         _seededBrokerId = broker.Id;
 
-        // Seed Account
         var account = new Account { Id = Guid.NewGuid(), Name = "Test Account" };
         await db.InsertAsync(account);
         _seededAccountId = account.Id;
+
+        // Step 3: Create the HttpClient, configuring it to use the test configuration.
+        _client = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                config.Sources.Clear();
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = _factory.ConnectionString,
+                    ["Jwt:Key"] = "ThisIsMySuperSecretKeyForAssetGazeWhichIsLongAndSecure",
+                    ["Jwt:Issuer"] = "https://assetgaze.com",
+                    ["Jwt:Audience"] = "https://assetgaze.com"
+                });
+            });
+        }).CreateClient();
     }
 
     [OneTimeTearDown]
@@ -73,8 +86,6 @@ public class TransactionControllerTests
     public async Task PostTransaction_WhenCalledWithValidData_ReturnsCreatedStatus()
     {
         // Arrange
-        // --- USE THE SEEDED USER ID FOR AUTHENTICATION ---
-        // This ensures the token represents a user that actually exists in the test database.
         AuthenticateClient(_seededUserId);
 
         var newTransaction = new CreateTransactionRequest
@@ -103,9 +114,7 @@ public class TransactionControllerTests
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes("ThisIsMySuperSecretKeyForAssetGazeWhichIsLongAndSecure");
-
         var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
-
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -114,7 +123,6 @@ public class TransactionControllerTests
             Issuer = "https://assetgaze.com",
             Audience = "https://assetgaze.com"
         };
-
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }

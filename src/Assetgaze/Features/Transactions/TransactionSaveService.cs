@@ -18,10 +18,6 @@ public class TransactionSaveService : ITransactionSaveService
         var newTransaction = new Transaction
         {
             Id = Guid.NewGuid(),
-            // OwnerId = loggedInUserId, // We will add these back when auth is fully wired up
-            // EnteredById = loggedInUserId,
-
-            // --- Map all the new fields from the DTO to the entity ---
             TransactionType = request.TransactionType,
             BrokerDealReference = request.BrokerDealReference,
             BrokerId = request.BrokerId,
