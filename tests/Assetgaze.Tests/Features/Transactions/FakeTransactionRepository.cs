@@ -18,5 +18,15 @@ public class FakeTransactionRepository : ITransactionRepository
         var transaction = Transactions.FirstOrDefault(t => t.Id == id);
         return Task.FromResult(transaction);
     }
+    
+    public async Task UpdateAsync(Transaction transaction)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+       throw new System.NotImplementedException();
+    }
 }
 
