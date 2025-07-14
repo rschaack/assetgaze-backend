@@ -22,11 +22,7 @@ public class AuthService : IAuthService
     {
         // 1. Check if a user with this email already exists
         var existingUser = await _userRepository.GetByEmailAsync(request.Email);
-        if (existingUser != null)
-        {
-            // User already exists, registration fails.
-            return false; 
-        }
+        if (existingUser != null) return false; 
 
         // 2. Hash the password
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -69,22 +65,26 @@ public class AuthService : IAuthService
             {
                 user.LockoutEndDateUtc = DateTime.UtcNow.AddMinutes(15);
             }
-
+            
             await _userRepository.UpdateAsync(user);
             return null;
         }
 
         // 3. Login is successful. For now, we return a placeholder token.
+        var permittedAccountIds = await _userRepository.GetAccountIdsForUserAsync(user.Id);
+        
+        
         user.FailedLoginAttempts = 0;
         user.LockoutEndDateUtc = null; // Clear any previous lock
         user.LoginCount++;
         user.LastLoginDate = DateTime.UtcNow;
         //    In the next step, we will generate a real JWT here.
-        var token = GenerateJwtToken(user); 
+        await _userRepository.UpdateAsync(user);
+        var token = GenerateJwtToken(user, permittedAccountIds); 
         return token;
     }
     
-    private string GenerateJwtToken(User user)
+    private string GenerateJwtToken(User user, List<Guid> accountIds)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         
@@ -99,6 +99,11 @@ public class AuthService : IAuthService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // JWT ID (standard claim for a unique token ID)
         };
 
+        foreach (var accountId in accountIds)
+        {
+            claims.Add(new Claim("account_permission", accountId.ToString()));
+        }
+        
         // Create the token descriptor
         var tokenDescriptor = new SecurityTokenDescriptor
         {

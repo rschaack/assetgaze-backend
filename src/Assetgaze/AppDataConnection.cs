@@ -19,4 +19,5 @@ public class AppDataConnection : DataConnection
     public ITable<User> Users => this.GetTable<User>();
     public ITable<Broker> Brokers => this.GetTable<Broker>();
     public ITable<Account> Accounts => this.GetTable<Account>();
+    public ITable<UserAccountPermission> UserAccountPermissions => this.GetTable<UserAccountPermission>();
 }

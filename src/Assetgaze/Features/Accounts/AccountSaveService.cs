@@ -1,15 +1,18 @@
 // In: src/Assetgaze/Features/Transactions/Services/TransactionSaveService.cs
 using Assetgaze.Features.Accounts.DTOs;
+using Assetgaze.Features.Users;
 
 namespace Assetgaze.Features.Accounts.Services;
 
 public class AccountSaveService : IAccountSaveService
 {
     private readonly IAccountRepository _AccountRepository;
+    private readonly IUserRepository _userRepository;
 
-    public AccountSaveService(IAccountRepository AccountRepository)
+    public AccountSaveService(IAccountRepository AccountRepository, IUserRepository userRepository)
     {
         _AccountRepository = AccountRepository;
+        _userRepository = userRepository;
     }
 
     // The method signature doesn't need to change, but the mapping logic inside MUST be updated.
@@ -22,6 +25,8 @@ public class AccountSaveService : IAccountSaveService
         };
 
         await _AccountRepository.AddAsync(newAccount);
+        await _userRepository.AddUserAccountPermissionAsync(loggedInUserId, newAccount.Id);
+
         
         return newAccount;
     }

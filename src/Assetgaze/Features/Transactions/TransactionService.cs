@@ -1,7 +1,7 @@
-// In: src/Assetgaze/Features/Transactions/Services/TransactionSaveService.cs
+
 using Assetgaze.Features.Transactions.DTOs;
 
-namespace Assetgaze.Features.Transactions.Services;
+namespace Assetgaze.Features.Transactions;
 
 public class TransactionService : ITransactionService
 {
@@ -12,9 +12,12 @@ public class TransactionService : ITransactionService
         _transactionRepository = transactionRepository;
     }
 
-    // The method signature doesn't need to change, but the mapping logic inside MUST be updated.
-    public async Task<Transaction> SaveTransactionAsync(CreateTransactionRequest request, Guid loggedInUserId)
+    public async Task<Transaction> SaveTransactionAsync(CreateTransactionRequest request, Guid loggedInUserId, List<Guid> authorizedAccountIds)
     {
+        if (!authorizedAccountIds.Contains(request.AccountId))
+            throw new UnauthorizedAccessException("Cannot create transaction for an account not authorized for the user.");
+        
+        
         var newTransaction = new Transaction
         {
             Id = Guid.NewGuid(),
@@ -34,21 +37,66 @@ public class TransactionService : ITransactionService
             FxCharge = request.FxCharge,
             AccruedInterest = request.AccruedInterest
         };
-
         await _transactionRepository.AddAsync(newTransaction);
-        
         return newTransaction;
     }
-    
-    public async Task<Transaction?> UpdateTransactionAsync(Guid transactionId, UpdateTransactionRequest request, Guid loggedInUserId)
+
+    public async Task<Transaction?> UpdateTransactionAsync(Guid transactionId, UpdateTransactionRequest request, Guid loggedInUserId, List<Guid> authorizedAccountIds) 
     {
-        // We will implement this logic next
-        throw new NotImplementedException();
+        var existingTransaction = await _transactionRepository.GetByIdAsync(transactionId);
+        if (existingTransaction == null)
+        {
+            return null; // Transaction not found
+        }
+
+        // Authorization: Check if the transaction's current AccountId is authorized for this user
+        if (!authorizedAccountIds.Contains(existingTransaction.AccountId)) 
+        { 
+            return null; // Or throw an AccessDeniedException
+        } 
+
+        // If the AccountId is being changed, ensure the new AccountId is also authorized
+        if (existingTransaction.AccountId != request.AccountId && !authorizedAccountIds.Contains(request.AccountId))
+        {
+            throw new UnauthorizedAccessException("Cannot move transaction to an account not authorized for the user.");
+        }
+
+        // Apply all updates from the new request DTO
+        existingTransaction.TransactionType = request.TransactionType;
+        existingTransaction.BrokerDealReference = request.BrokerDealReference;
+        existingTransaction.BrokerId = request.BrokerId;
+        existingTransaction.AccountId = request.AccountId; 
+        existingTransaction.TaxWrapper = request.TaxWrapper;
+        existingTransaction.ISIN = request.ISIN;
+        existingTransaction.TransactionDate = request.TransactionDate;
+        existingTransaction.Quantity = request.Quantity;
+        existingTransaction.NativePrice = request.NativePrice;
+        existingTransaction.LocalPrice = request.LocalPrice;
+        existingTransaction.Consideration = request.Consideration;
+        existingTransaction.BrokerCharge = request.BrokerCharge;
+        existingTransaction.StampDuty = request.StampDuty;
+        existingTransaction.FxCharge = request.FxCharge;
+        existingTransaction.AccruedInterest = request.AccruedInterest;
+
+        await _transactionRepository.UpdateAsync(existingTransaction);
+        
+        return existingTransaction;
     }
 
-    public async Task<bool> DeleteTransactionAsync(Guid transactionId, Guid loggedInUserId)
+    public async Task<bool> DeleteTransactionAsync(Guid transactionId, Guid loggedInUserId, List<Guid> authorizedAccountIds) 
     {
-        // We will implement this logic next
-        throw new NotImplementedException();
+        var transactionToDelete = await _transactionRepository.GetByIdAsync(transactionId);
+        if (transactionToDelete == null)
+        {
+            return false; // Transaction not found
+        }
+
+        // Authorization: Check if the transaction's AccountId is authorized for this user
+        if (!authorizedAccountIds.Contains(transactionToDelete.AccountId)) 
+        { 
+            return false; // Or throw an AccessDeniedException
+        } 
+
+        return await _transactionRepository.DeleteAsync(transactionId);
     }
 }

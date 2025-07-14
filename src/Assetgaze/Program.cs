@@ -6,7 +6,6 @@ using Assetgaze.Features.Accounts.Services;
 using Assetgaze.Features.Brokers;
 using Assetgaze.Features.Brokers.Services;
 using Assetgaze.Features.Transactions;
-using Assetgaze.Features.Transactions.Services;
 using Assetgaze.Features.Users;
 using Assetgaze.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

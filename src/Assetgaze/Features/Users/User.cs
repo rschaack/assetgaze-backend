@@ -3,6 +3,7 @@ namespace Assetgaze.Features.Users;
 using LinqToDB.Mapping;
 
 
+
 [Table("Users")]
 public class User
 {
