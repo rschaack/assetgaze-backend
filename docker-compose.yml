@@ -14,6 +14,7 @@ services:
     environment:
       # Environment variables passed to our API service
       - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development  
       # --- ADD THESE ENVIRONMENT VARIABLES FOR KESTREL (the .NET web server) ---
       - Kestrel__Certificates__Default__Path=/https/assetgaze.pfx
       - Kestrel__Certificates__Default__Password=dev-password # Use the same password as above
