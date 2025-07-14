@@ -1,5 +1,4 @@
 // In: src/Assetgaze/Program.cs
-// (Relevant additions, full content from before for context)
 using Serilog;
 using System.Text;
 using Assetgaze;
@@ -13,11 +12,11 @@ using Assetgaze.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Hosting; // Added for IHostEnvironment
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, configuration) => 
+builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddAuthentication(options =>
@@ -47,21 +46,24 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+// Transaction Feature
 builder.Services.AddScoped<ITransactionRepository, Linq2DbTransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
+// User Feature
 builder.Services.AddScoped<IUserRepository, Linq2DbUserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Broker Feature
 builder.Services.AddScoped<IBrokerRepository, Linq2DbBrokerRepository>();
 builder.Services.AddScoped<IBrokerSaveService, BrokerSaveService>();
 
+// Account Feature
 builder.Services.AddScoped<IAccountRepository, Linq2DbAccountRepository>();
 builder.Services.AddScoped<IAccountSaveService, AccountSaveService>();
 
 var app = builder.Build();
 
-// No change needed here, as middleware automatically resolves injected services
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseSerilogRequestLogging();
 

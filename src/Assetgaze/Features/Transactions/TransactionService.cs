@@ -21,11 +21,11 @@ public class TransactionService : ITransactionService
         var newTransaction = new Transaction
         {
             Id = Guid.NewGuid(),
-            TransactionType = request.TransactionType,
+            TransactionType = request.TransactionType.ToString(), 
             BrokerDealReference = request.BrokerDealReference,
             BrokerId = request.BrokerId,
             AccountId = request.AccountId,
-            TaxWrapper = request.TaxWrapper,
+            TaxWrapper = request.TaxWrapper.ToString(),
             ISIN = request.ISIN,
             TransactionDate = request.TransactionDate,
             Quantity = request.Quantity,
@@ -62,11 +62,11 @@ public class TransactionService : ITransactionService
         }
 
         // Apply all updates from the new request DTO
-        existingTransaction.TransactionType = request.TransactionType;
+        existingTransaction.TransactionType = request.TransactionType.ToString();
         existingTransaction.BrokerDealReference = request.BrokerDealReference;
         existingTransaction.BrokerId = request.BrokerId;
         existingTransaction.AccountId = request.AccountId; 
-        existingTransaction.TaxWrapper = request.TaxWrapper;
+        existingTransaction.TaxWrapper = request.TaxWrapper.ToString();
         existingTransaction.ISIN = request.ISIN;
         existingTransaction.TransactionDate = request.TransactionDate;
         existingTransaction.Quantity = request.Quantity;

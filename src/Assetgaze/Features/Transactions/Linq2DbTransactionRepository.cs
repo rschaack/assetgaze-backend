@@ -18,6 +18,7 @@ public class Linq2DbTransactionRepository : ITransactionRepository
     {
         // Create a new connection for this specific operation
         await using var db = new AppDataConnection(_connectionString);
+        
         await db.InsertAsync(transaction);
     }
 
@@ -32,6 +33,7 @@ public class Linq2DbTransactionRepository : ITransactionRepository
     public async Task UpdateAsync(Transaction transaction)
     {
         await using var db = new AppDataConnection(_connectionString);
+        
         await db.UpdateAsync(transaction);
     }
 

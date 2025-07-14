@@ -1,5 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+using System.Data;
 using Assetgaze.Domain;
+using LinqToDB.Data;
+using LinqToDB;
 using LinqToDB.Mapping;
+using DataType = LinqToDB.DataType;
 
 namespace Assetgaze.Features.Transactions;
 
@@ -13,9 +18,9 @@ public class Transaction
 {
     [PrimaryKey]
     public Guid Id { get; set; }
-
+    
     [Column("TransactionType"), NotNull]
-    public TransactionType TransactionType { get; set; }
+    public string TransactionType { get; set; } = string.Empty;
     
     [Column("BrokerDealReference")]
     public string? BrokerDealReference { get; set; }
@@ -27,7 +32,7 @@ public class Transaction
     public Guid AccountId { get; set; }
 
     [Column("TaxWrapper"), NotNull]
-    public TaxWrapper TaxWrapper { get; set; }
+    public string TaxWrapper { get; set; } = string.Empty; 
     
     [Column("ISIN"), NotNull] 
     public string ISIN { get; set; } = string.Empty; // This is how we represent the asset for now
