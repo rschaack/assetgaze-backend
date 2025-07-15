@@ -3,7 +3,7 @@
 using Assetgaze.Domain;
 using Assetgaze.Features.Transactions;
 using Assetgaze.Features.Transactions.DTOs;
-using Assetgaze.Features.Transactions.Services;
+
 
 namespace Assetgaze.Tests.Features.Transactions;
 
@@ -30,11 +30,12 @@ public class TransactionServiceTests
     {
         // Arrange
         var loggedInUserId = Guid.NewGuid(); // A dummy user ID for the test
+        var accountId = Guid.NewGuid();
         var request = new CreateTransactionRequest
         {
             TransactionType = TransactionType.Buy,
             BrokerId = Guid.NewGuid(),
-            AccountId = Guid.NewGuid(),
+            AccountId = accountId,
             TaxWrapper = TaxWrapper.ISA,
             ISIN = "US0378331005",
             TransactionDate = DateTime.UtcNow,
@@ -44,9 +45,12 @@ public class TransactionServiceTests
             Consideration = 2000.00m
         };
 
+        var authorizedAccountIds = new List<Guid> { accountId };
+        
         // Act
         // Call the service method we want to test
-        var result = await _service.SaveTransactionAsync(request, loggedInUserId);
+        var result = await _service.SaveTransactionAsync(request, loggedInUserId, authorizedAccountIds); // Updated method call
+
 
         // Assert
         // 1. Verify that a transaction was actually "saved" to our fake repository
@@ -58,6 +62,9 @@ public class TransactionServiceTests
         Assert.That(savedTransaction, Is.Not.Null);
         Assert.That(savedTransaction.Id, Is.EqualTo(result.Id));
         Assert.That(savedTransaction.ISIN, Is.EqualTo(request.ISIN));
-        Assert.That(savedTransaction.TransactionType, Is.EqualTo(request.TransactionType));
+        // Assertions for string properties now:
+        Assert.That(savedTransaction.TransactionType, Is.EqualTo(request.TransactionType.ToString())); 
+        Assert.That(savedTransaction.TaxWrapper, Is.EqualTo(request.TaxWrapper.ToString())); 
+
     }
 }
