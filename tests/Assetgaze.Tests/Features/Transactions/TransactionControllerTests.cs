@@ -1,4 +1,6 @@
 ﻿// In: tests/Assetgaze.Tests/Features/Transactions/TransactionControllerTests.cs
+// (Relevant section within the DeleteTransaction_WhenCalledWithoutAuthorization_ReturnsForbidden test)
+
 using System.Net;
 using System.Text.Json;
 using System.Net.Http.Headers;
@@ -8,17 +10,17 @@ using Assetgaze.Features.Transactions.DTOs;
 using LinqToDB;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-// Removed: using System.Transactions; // This was ambiguous and not needed
 using Assetgaze.Domain;
 using Assetgaze.Features.Accounts;
 using Assetgaze.Features.Brokers;
 using Assetgaze.Features.Users;
 using Assetgaze.Features.Transactions; 
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic; // Added for List<Guid>
+using System.Collections.Generic; 
 using System.Linq;
-using System.Text.Json.Serialization; // Added for Select
-using Microsoft.Extensions.DependencyInjection; // Added for AddControllers().AddJsonOptions
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection; 
+using Microsoft.AspNetCore.Hosting; 
 
 namespace Assetgaze.Tests.Features.Transactions;
 
@@ -31,7 +33,7 @@ public class TransactionControllerTests
     private static Guid _seededBrokerId;
     private static Guid _seededAccountId;
     private static Guid _seededUserId;
-    private static IUserRepository _userRepository = null!; // New: to interact with real DB for permissions
+    private static IUserRepository _userRepository = null!; 
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -39,22 +41,19 @@ public class TransactionControllerTests
         _factory = new AssetGazeApiFactory();
         await _factory.InitializeContainerAsync();
         
-        // Step 1: Run migrations directly, using the connection string from the now-running container.
         MigrationManager.ApplyMigrations(_factory.ConnectionString);
         
-        // Step 2: Seed the database with prerequisite data.
         await using var db = new AppDataConnection(_factory.ConnectionString);
         
-        // Initialize a real Linq2DbUserRepository for seeding permissions
         var configBuilder = new ConfigurationBuilder();
         configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = _factory.ConnectionString
         });
-        var config = configBuilder.Build();
-        _userRepository = new Linq2DbUserRepository(config); // Initialize the real repo
+        var userRepoConfig = configBuilder.Build(); 
+        _userRepository = new Linq2DbUserRepository(userRepoConfig); 
 
-        var user = new User { Id = Guid.NewGuid(), Email = "test@user.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!") }; // Hash password for AuthService logic
+        var user = new User { Id = Guid.NewGuid(), Email = "test@user.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!") }; 
         await db.InsertAsync(user);
         _seededUserId = user.Id;
 
@@ -66,13 +65,13 @@ public class TransactionControllerTests
         await db.InsertAsync(account);
         _seededAccountId = account.Id;
 
-        // NEW: Seed UserAccountPermission
         await _userRepository.AddUserAccountPermissionAsync(_seededUserId, _seededAccountId);
 
 
-        // Step 3: Create the HttpClient, configuring it to use the test configuration.
         _client = _factory.WithWebHostBuilder(builder =>
         {
+            builder.UseEnvironment("Development"); 
+
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.Sources.Clear();
@@ -84,7 +83,6 @@ public class TransactionControllerTests
                     ["Jwt:Audience"] = "https://assetgaze.com"
                 });
             });
-            // Ensure JSON options are configured for enums in tests as well
             builder.ConfigureServices(services =>
             {
                 services.AddControllers().AddJsonOptions(options =>
@@ -104,10 +102,9 @@ public class TransactionControllerTests
         _client.Dispose();
     }
 
-    // Modified AuthenticateClient to pass account IDs
     private void AuthenticateClient(Guid userId, List<Guid> authorizedAccountIds)
     {
-        var token = GenerateTestJwtToken(userId, authorizedAccountIds); // Pass account IDs
+        var token = GenerateTestJwtToken(userId, authorizedAccountIds);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
@@ -115,8 +112,7 @@ public class TransactionControllerTests
     public async Task PostTransaction_WhenCalledWithValidData_CreatesAndRetrievesTransaction()
     {
         // Arrange
-        // Authenticate the client with the seeded user and their associated account
-        AuthenticateClient(_seededUserId, new List<Guid> { _seededAccountId }); // Pass seeded account ID
+        AuthenticateClient(_seededUserId, new List<Guid> { _seededAccountId });
 
         var newTransaction = new CreateTransactionRequest
         {
@@ -131,13 +127,11 @@ public class TransactionControllerTests
             LocalPrice = 200.00m,
             Consideration = 2000.00m
         };
-        // Ensure JsonSerializerOptions include JsonStringEnumConverter when serializing
         var jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         
         var content = new StringContent(JsonSerializer.Serialize(newTransaction, jsonSerializerOptions), System.Text.Encoding.UTF8, "application/json");
 
-        // --- DEBUGGING OUTPUT ---
         Console.WriteLine($"DEBUG TEST: Seeded Account ID for request: {newTransaction.AccountId}");
         var generatedToken = GenerateTestJwtToken(_seededUserId, new List<Guid> { _seededAccountId });
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -145,7 +139,6 @@ public class TransactionControllerTests
         var claimsInToken = jwtSecurityToken.Claims.Where(c => c.Type == "account_permission").Select(c => c.Value).ToList();
         Console.WriteLine($"DEBUG TEST: Account IDs in generated token: {string.Join(", ", claimsInToken)}");
         Console.WriteLine($"DEBUG TEST: Request Account ID: {newTransaction.AccountId}");
-        // ------------------------
 
         // Act
         var postResponse = await _client.PostAsync("/api/transactions", content);
@@ -153,19 +146,15 @@ public class TransactionControllerTests
         // Assert
         Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         
-        // When deserializing the response into the Transaction entity (which now has string properties for enums),
-        // we don't need JsonStringEnumConverter because it's already a string.
         var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await postResponse.Content.ReadAsStringAsync(), 
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     
         Assert.That(createdTransaction, Is.Not.Null);
 
-        // 2. Make a GET request to retrieve the transaction we just created
         var getResponse = await _client.GetAsync($"/api/transactions/{createdTransaction.Id}");
         Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-        // 3. Deserialize the GET response and assert its values
         var retrievedTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await getResponse.Content.ReadAsStringAsync(),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -174,12 +163,11 @@ public class TransactionControllerTests
         Assert.That(retrievedTransaction.Id, Is.EqualTo(createdTransaction.Id));
         Assert.That(retrievedTransaction.ISIN, Is.EqualTo(createdTransaction.ISIN));
         Assert.That(retrievedTransaction.Consideration, Is.EqualTo(createdTransaction.Consideration));
-        // Assertions for string properties now:
         Assert.That(retrievedTransaction.TransactionType, Is.EqualTo(newTransaction.TransactionType.ToString()));
         Assert.That(retrievedTransaction.TaxWrapper, Is.EqualTo(newTransaction.TaxWrapper.ToString()));
 
     }
-    
+
     [Test]
     public async Task PutTransaction_WhenCalledWithValidData_UpdatesAndRetrievesTransaction()
     {
@@ -204,6 +192,12 @@ public class TransactionControllerTests
         jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         var initialContent = new StringContent(JsonSerializer.Serialize(initialTransactionRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
         var postResponse = await _client.PostAsync("/api/transactions", initialContent);
+        if (postResponse.StatusCode != HttpStatusCode.Created)
+        {
+            var errorContent = await postResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"DEBUG TEST ERROR: Initial POST for PUT test failed with status {postResponse.StatusCode}. Content: {errorContent}");
+            Assert.Fail($"Initial POST for PUT test failed: Expected Created, but got {postResponse.StatusCode}. Error Content: {errorContent}");
+        }
         Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await postResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -277,6 +271,12 @@ public class TransactionControllerTests
         jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         var initialContent = new StringContent(JsonSerializer.Serialize(initialTransactionRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
         var postResponse = await _client.PostAsync("/api/transactions", initialContent);
+        if (postResponse.StatusCode != HttpStatusCode.Created)
+        {
+            var errorContent = await postResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"DEBUG TEST ERROR: Initial POST for DELETE test failed with status {postResponse.StatusCode}. Content: {errorContent}");
+            Assert.Fail($"Initial POST for DELETE test failed: Expected Created, but got {postResponse.StatusCode}. Error Content: {errorContent}");
+        }
         Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await postResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -305,7 +305,7 @@ public class TransactionControllerTests
             BrokerId = _seededBrokerId,
             AccountId = _seededAccountId,
             TaxWrapper = TaxWrapper.ISA,
-            ISIN = "UNAUTHORIZED_TEST_ISIN",
+            ISIN = "US0378331005", // This was the problematic ISIN
             TransactionDate = DateTime.UtcNow,
             Quantity = 1, NativePrice = 1, LocalPrice = 1, Consideration = 1
         };
@@ -313,6 +313,12 @@ public class TransactionControllerTests
         jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         var initialContent = new StringContent(JsonSerializer.Serialize(initialTransactionRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
         var postResponse = await _client.PostAsync("/api/transactions", initialContent);
+        if (postResponse.StatusCode != HttpStatusCode.Created)
+        {
+            var errorContent = await postResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"DEBUG TEST ERROR: Initial POST for unauthorized DELETE test failed with status {postResponse.StatusCode}. Content: {errorContent}");
+            Assert.Fail($"Initial POST for unauthorized DELETE test failed: Expected Created, but got {postResponse.StatusCode}. Error Content: {errorContent}");
+        }
         Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
             await postResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -327,17 +333,16 @@ public class TransactionControllerTests
         var deleteResponse = await _client.DeleteAsync($"/api/transactions/{createdTransaction.Id}");
 
         // Assert
-        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden)); // Expect 403 Forbidden
+        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden)); 
     }
-    
-    // Modified GenerateTestJwtToken to include account permissions
+
+
     private static string GenerateTestJwtToken(Guid userId, List<Guid> accountIds)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes("ThisIsMySuperSecretKeyForAssetGazeWhichIsLongAndSecure");
         var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
 
-        // Add account_permission claims
         foreach (var accountId in accountIds)
         {
             claims.Add(new Claim("account_permission", accountId.ToString()));

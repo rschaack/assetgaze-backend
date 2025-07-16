@@ -44,10 +44,6 @@ public class TransactionsController : ControllerBase
         {
             return StatusCode(403, new { message = ex.Message }); 
         }
-        catch (Exception)
-        {
-            return StatusCode(500, "An error occurred while creating the transaction.");
-        }
     }
     
     [HttpGet("{id}")]
@@ -106,10 +102,6 @@ public class TransactionsController : ControllerBase
         {
             return StatusCode(403, new { message = ex.Message }); 
         }
-        catch (Exception)
-        {
-            return StatusCode(500, "An error occurred while updating the transaction.");
-        }
     }
     
     [HttpDelete("{id}")] 
@@ -139,10 +131,6 @@ public class TransactionsController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, new { message = ex.Message }); 
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, "An error occurred while deleting the transaction.");
         }
     }
 }

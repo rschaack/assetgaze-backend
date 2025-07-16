@@ -19,7 +19,7 @@ public class FakeTransactionRepository : ITransactionRepository
         return Task.FromResult(transaction);
     }
     
-    public async Task UpdateAsync(Transaction transaction)
+    public Task UpdateAsync(Transaction transaction)
     {
         var existing = Transactions.FirstOrDefault(t => t.Id == transaction.Id);
         if (existing != null)
@@ -44,7 +44,7 @@ public class FakeTransactionRepository : ITransactionRepository
         return Task.CompletedTask;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public Task<bool> DeleteAsync(Guid id)
     {
         var removedCount = Transactions.RemoveAll(t => t.Id == id);
         return Task.FromResult(removedCount > 0);

@@ -52,7 +52,7 @@ public class TransactionService : ITransactionService
         // Authorization: Check if the transaction's current AccountId is authorized for this user
         if (!authorizedAccountIds.Contains(existingTransaction.AccountId)) 
         { 
-            return null; // Or throw an AccessDeniedException
+            throw new UnauthorizedAccessException("User is not authorized to update this transaction."); 
         } 
 
         // If the AccountId is being changed, ensure the new AccountId is also authorized
@@ -94,7 +94,7 @@ public class TransactionService : ITransactionService
         // Authorization: Check if the transaction's AccountId is authorized for this user
         if (!authorizedAccountIds.Contains(transactionToDelete.AccountId)) 
         { 
-            return false; // Or throw an AccessDeniedException
+            throw new UnauthorizedAccessException("User is not authorized to update this transaction."); // Changed to throw
         } 
 
         return await _transactionRepository.DeleteAsync(transactionId);
