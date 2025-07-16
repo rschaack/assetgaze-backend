@@ -21,12 +21,33 @@ public class FakeTransactionRepository : ITransactionRepository
     
     public async Task UpdateAsync(Transaction transaction)
     {
-        throw new System.NotImplementedException();
+        var existing = Transactions.FirstOrDefault(t => t.Id == transaction.Id);
+        if (existing != null)
+        {
+            // Update properties of the existing fake transaction
+            existing.TransactionType = transaction.TransactionType;
+            existing.BrokerDealReference = transaction.BrokerDealReference;
+            existing.BrokerId = transaction.BrokerId;
+            existing.AccountId = transaction.AccountId;
+            existing.TaxWrapper = transaction.TaxWrapper;
+            existing.ISIN = transaction.ISIN;
+            existing.TransactionDate = transaction.TransactionDate;
+            existing.Quantity = transaction.Quantity;
+            existing.NativePrice = transaction.NativePrice;
+            existing.LocalPrice = transaction.LocalPrice;
+            existing.Consideration = transaction.Consideration;
+            existing.BrokerCharge = transaction.BrokerCharge;
+            existing.StampDuty = transaction.StampDuty;
+            existing.FxCharge = transaction.FxCharge;
+            existing.AccruedInterest = transaction.AccruedInterest;
+        }
+        return Task.CompletedTask;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-       throw new System.NotImplementedException();
+        var removedCount = Transactions.RemoveAll(t => t.Id == id);
+        return Task.FromResult(removedCount > 0);
     }
 }
 

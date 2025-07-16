@@ -180,6 +180,156 @@ public class TransactionControllerTests
 
     }
     
+    [Test]
+    public async Task PutTransaction_WhenCalledWithValidData_UpdatesAndRetrievesTransaction()
+    {
+        // Arrange
+        AuthenticateClient(_seededUserId, new List<Guid> { _seededAccountId });
+
+        // 1. Create an initial transaction
+        var initialTransactionRequest = new CreateTransactionRequest
+        {
+            TransactionType = TransactionType.Buy,
+            BrokerId = _seededBrokerId,
+            AccountId = _seededAccountId,
+            TaxWrapper = TaxWrapper.DEALING,
+            ISIN = "US0378331005",
+            TransactionDate = DateTime.UtcNow.AddDays(-10),
+            Quantity = 5,
+            NativePrice = 100.00m,
+            LocalPrice = 100.00m,
+            Consideration = 500.00m
+        };
+        var jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        var initialContent = new StringContent(JsonSerializer.Serialize(initialTransactionRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
+        var postResponse = await _client.PostAsync("/api/transactions", initialContent);
+        Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
+            await postResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.That(createdTransaction, Is.Not.Null);
+
+        // 2. Prepare an update request
+        var updateRequest = new UpdateTransactionRequest
+        {
+            TransactionType = TransactionType.Sell, // Change type
+            BrokerDealReference = "UPDATEDREF",
+            BrokerId = _seededBrokerId,
+            AccountId = _seededAccountId,
+            TaxWrapper = TaxWrapper.SIPP, // Change tax wrapper
+            ISIN = "GB00B5B71H80", // Change ISIN
+            TransactionDate = DateTime.UtcNow,
+            Quantity = 10,
+            NativePrice = 250.00m,
+            LocalPrice = 250.00m,
+            Consideration = 2500.00m,
+            BrokerCharge = 15.00m,
+            StampDuty = 2.00m
+        };
+        var updateContent = new StringContent(JsonSerializer.Serialize(updateRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
+
+        // Act
+        var putResponse = await _client.PutAsync($"/api/transactions/{createdTransaction.Id}", updateContent);
+
+        // Assert
+        Assert.That(putResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // Retrieve the updated transaction and verify
+        var getResponse = await _client.GetAsync($"/api/transactions/{createdTransaction.Id}");
+        Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var updatedTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
+            await getResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        Assert.That(updatedTransaction, Is.Not.Null);
+        Assert.That(updatedTransaction.Id, Is.EqualTo(createdTransaction.Id));
+        Assert.That(updatedTransaction.TransactionType, Is.EqualTo(updateRequest.TransactionType.ToString()));
+        Assert.That(updatedTransaction.BrokerDealReference, Is.EqualTo(updateRequest.BrokerDealReference));
+        Assert.That(updatedTransaction.TaxWrapper, Is.EqualTo(updateRequest.TaxWrapper.ToString()));
+        Assert.That(updatedTransaction.Quantity, Is.EqualTo(updateRequest.Quantity));
+        Assert.That(updatedTransaction.NativePrice, Is.EqualTo(updateRequest.NativePrice));
+        Assert.That(updatedTransaction.Consideration, Is.EqualTo(updateRequest.Consideration));
+        Assert.That(updatedTransaction.BrokerCharge, Is.EqualTo(updateRequest.BrokerCharge));
+        Assert.That(updatedTransaction.StampDuty, Is.EqualTo(updateRequest.StampDuty));
+        // Note: FxCharge and AccruedInterest might be null if not provided in updateRequest
+    }
+
+    [Test]
+    public async Task DeleteTransaction_WhenCalledWithValidData_DeletesTransaction()
+    {
+        // Arrange
+        AuthenticateClient(_seededUserId, new List<Guid> { _seededAccountId });
+
+        // 1. Create an initial transaction to delete
+        var initialTransactionRequest = new CreateTransactionRequest
+        {
+            TransactionType = TransactionType.Buy,
+            BrokerId = _seededBrokerId,
+            AccountId = _seededAccountId,
+            TaxWrapper = TaxWrapper.ISA,
+            ISIN = "US0378331005",
+            TransactionDate = DateTime.UtcNow.AddDays(-5),
+            Quantity = 100,
+            NativePrice = 10.00m,
+            LocalPrice = 10.00m,
+            Consideration = 1000.00m
+        };
+        var jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        var initialContent = new StringContent(JsonSerializer.Serialize(initialTransactionRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
+        var postResponse = await _client.PostAsync("/api/transactions", initialContent);
+        Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
+            await postResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.That(createdTransaction, Is.Not.Null);
+
+        // Act
+        var deleteResponse = await _client.DeleteAsync($"/api/transactions/{createdTransaction.Id}");
+
+        // Assert
+        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.NoContent)); // 204 No Content
+
+        // Verify it's truly deleted by attempting to retrieve it
+        var getResponseAfterDelete = await _client.GetAsync($"/api/transactions/{createdTransaction.Id}");
+        Assert.That(getResponseAfterDelete.StatusCode, Is.EqualTo(HttpStatusCode.NotFound)); // 404 Not Found
+    }
+    
+    [Test]
+    public async Task DeleteTransaction_WhenCalledWithoutAuthorization_ReturnsForbidden()
+    {
+        // Arrange
+        // Create a transaction belonging to the seeded user
+        AuthenticateClient(_seededUserId, new List<Guid> { _seededAccountId });
+        var initialTransactionRequest = new CreateTransactionRequest
+        {
+            TransactionType = TransactionType.Buy,
+            BrokerId = _seededBrokerId,
+            AccountId = _seededAccountId,
+            TaxWrapper = TaxWrapper.ISA,
+            ISIN = "UNAUTHORIZED_TEST_ISIN",
+            TransactionDate = DateTime.UtcNow,
+            Quantity = 1, NativePrice = 1, LocalPrice = 1, Consideration = 1
+        };
+        var jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        var initialContent = new StringContent(JsonSerializer.Serialize(initialTransactionRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
+        var postResponse = await _client.PostAsync("/api/transactions", initialContent);
+        Assert.That(postResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        var createdTransaction = JsonSerializer.Deserialize<Assetgaze.Features.Transactions.Transaction>(
+            await postResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.That(createdTransaction, Is.Not.Null);
+
+        // Authenticate with a different user (or no user) who does NOT have permission to _seededAccountId
+        var unauthorizedUserId = Guid.NewGuid();
+        // This user is not associated with _seededAccountId
+        AuthenticateClient(unauthorizedUserId, new List<Guid>()); // No authorized accounts for this user
+
+        // Act
+        var deleteResponse = await _client.DeleteAsync($"/api/transactions/{createdTransaction.Id}");
+
+        // Assert
+        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden)); // Expect 403 Forbidden
+    }
+    
     // Modified GenerateTestJwtToken to include account permissions
     private static string GenerateTestJwtToken(Guid userId, List<Guid> accountIds)
     {
